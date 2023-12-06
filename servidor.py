@@ -1,56 +1,91 @@
 import socket
-import sys
+import threading
 
-# Creacion del socket TCP
-sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+class Server:
+  def __init__(self):
+    self.host = 'localhost'
+    self.port = 5555
+    self.currentC = 0
+    self.alumnos = {}
 
-# Definicion del servidor
-host = 'localhost'
+  def Inscripcion(self, connection, client):
+    if client in self.alumnos:
+      connection.sendall("Usted ya está inscrito en el curso".encode('utf-8'))
+      return
+    
+    elif self.currentC >= 15:
+      # Enviar mensaje de rechazo
+      connection.sendall("Rechazo de inscripción: Limite de almnos alcanzado.".encode('utf-8'))
+      return
+    
+    else:
+      self.currentC += 1
+      self.alumnos[client] = self.currentC
+      print('El cliente ', client,' se ha inscrito en la posición ', self.currentC,'.')
+      connection.sendall(f"Inscrito en el curso en la posición {self.currentC}".encode('utf-8'))
 
-# Definicion del puerto de comunicacion
-# Especifica el puerto con el que nos queremos comunicar
-port = 5555
+  def Fecha(self, connection):
+    connection.sendall("El curso empezará a las 9:00hrs del dia 15 de diciembre".encode('utf-8'))
 
-# Vincular con el socket al puerto
-sock.bind((host, port))
+  def Posicion(self, connection, client):
+    if client in self.alumnos:
+      connection.sendall(f"Usted está inscrito en la posición número {self.alumnos.get(client)}".encode('utf-8'))
+    else:
+      connection.sendall("Usted no está inscrito en el curso".encode('utf-8'))
 
-# Escuchando las conexiones entrantes
-sock.listen(1)
-
-# Esperando por conexion
-print("Esperando una conexion")
-connection, client = sock.accept()
-
-print(client, 'conectado..')
-
-# Recibir los datos en pequeños fragmentos y retransmitirlos
-# data = connection.recv(16)
-# print('\nrecivido %s"' %data)
-
-try:
-  # Esperar por una conexión
-  print("Cliente conectado.")
-  try:
+  def Cliente(self, connection, client):
     while True:
-      # Recibir datos en pequeños fragmentos y retransmitirlos
-      data = connection.recv(16)
-      if data.decode('utf-8') == 'exit':
-        break  # Salir del bucle si no hay datos
-      print(f"Mensaje recibido: {data.decode('utf-8')}")
+      data = connection.recv(11)
 
-      # Enviar una respuesta al cliente
-      message = f"Mensaje recibido por el servidor: {data.decode('utf-8')}"
-      connection.sendall(message.encode('utf-8'))
-  finally:
-    # Cerrar la conexión con el cliente
-    print("Fin")
-except KeyboardInterrupt:
-  print("Servidor interrumpido por el usuario.")
-finally:
-# if data:
-#   connection.sendall(data)
-# else:
-#   print('Sin mensaje', client)
+      if data.decode('utf-8') == 'inscripcion':
+        print('\nEl cliente ', client,' ha solicitado inscribirse.')
+        self.Inscripcion(connection, client)
 
-# Cerrar la conexion
-  connection.close()
+      elif data.decode('utf-8') == 'fecha':
+        print('\nEl cliente ', client ,' ha solicitado la fecha y hora del curso.')
+        self.Fecha(connection)
+
+      elif data.decode('utf-8') == 'posicion':
+        print('\nEl cliente ', client,' ha solicitado ver su posicion de inscripción')
+        self.Posicion(connection, client)
+        
+      elif data.decode('utf-8') == 'exit':
+        print('\nEl cliente ', client,' se ha desconectado.')
+        break
+      
+      else:
+        print('Sin mensaje', client)
+        break
+
+  def Inicio(self):
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    # Vincular con el socket al puerto
+    sock.bind((self.host, self.port))
+
+    # Escuchando las conexiones entrantes
+    sock.listen(5)
+
+    try:
+      while True:
+        # Esperando por conexion
+        print("\nEsperando alguna conexion..")
+        connection, client = sock.accept()
+
+        print(client, ' se ha conectado.')
+        connection.sendall("Bienvenido al Servidor".encode('utf-8'))
+
+        # Iniciar nuevo hilo para el cliente
+        cliente_hilo = threading.Thread(target=self.Cliente, args=(connection, client))
+        cliente_hilo.start()
+
+    except KeyboardInterrupt:
+      print("Servidor interrumpido por el usuario")
+
+    finally:
+      # Cerrar la conexion  
+      connection.close()
+
+if __name__ == "__main__":
+  serv = Server()
+  serv.Inicio()

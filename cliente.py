@@ -1,44 +1,50 @@
 import socket
-import sys
 
-# Creacion del socket TCP
-stream_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+if __name__ == "__main__":
 
-# Definicion del servidor
-host = 'localhost'
+  # Creacion del socket TCP
+  stream_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+  host = 'localhost'
+  port = 5555
 
-# Definicion del puerto de comunicacion
-# Especifica el puerto con el que nos queremos comunicar
-port = 5555
+  server_address = ((host, port))
 
-# Conectando el socket al puerto donde el server esta escuchando
-server_address = ((host, port))
+  print("Conectando...")
+  stream_socket.connect(server_address)
 
-print("Conectando...")
-
-stream_socket.connect(server_address)
-
-# Envia solicitud de datos al servidor
-# message = 'localhost'
-# stream_socket.sendall(message.encode('utf-8'))
-while True:
-  message = input("Ingrese un mensaje ('exit para salir'): ")
-
-  # En cado de 'exit'
-  if message == 'exit':
-    stream_socket.sendall(message.encode('utf-8'))
-    break
-
-  # Enviar mensaje a Servidor
-  stream_socket.sendall(message.encode('utf-8'))
-
-  # Respuesta de servidor
+  # Respuesta del Server
   data = stream_socket.recv(40)
-  print(f"Respuesta: {data.decode('utf-8')}")
+  print(f"\nSERVIDOR: {data.decode('utf-8')}")
 
-# Obtiene las respuestas del servidos
-# data = stream_socket.recv(16)
-# print(data)
 
-print('socket cerrado')
-stream_socket.close()
+  print("\n\t¿Qué desea solicitar al servidor?\n")
+  print("1. Inscribirse")
+  print("2. Obtener fecha y hora del curso")
+  print("3. Obtener posición de inscripción")
+  print("4. Salir")
+
+  while True:
+    choice = input("\nEscoja una opcion: ")
+
+    # Para el resto de opciones hay operaciones varias
+    if choice == '1':
+      stream_socket.sendall('inscripcion'.encode('utf-8'))
+      data = stream_socket.recv(80)
+      print(f"\nSERVIDOR: {data.decode('utf-8')}")
+
+    elif choice == '2':
+      stream_socket.sendall('fecha'.encode('utf-8'))
+      data = stream_socket.recv(56)
+      print(f"SERVIDOR: {data.decode('utf-8')}")
+
+    elif choice == '3':
+      stream_socket.sendall('posicion'.encode('utf-8'))
+      data = stream_socket.recv(50)
+      print(f"SERVIDOR: {data.decode('utf-8')}")
+
+    elif choice == '4':
+      stream_socket.sendall('exit'.encode('utf-8'))
+      break
+
+  print('\nSocket cerrado')
+  stream_socket.close()
