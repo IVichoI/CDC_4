@@ -19,11 +19,13 @@ print("Conectando...")
 stream_socket.connect(server_address)
 
 # Envia solicitud de datos al servidor
-message = 'Hola Server Perron'
+message = 'local host'
+stream_socket.sendall(message.encode('utf-8'))
+message = '5555'
 stream_socket.sendall(message.encode('utf-8'))
 
 # Obtiene las respuestas del servidos
-data = stream_socket.recv(10)
+data = stream_socket.recv(16)
 print(data)
 
 print('socket cerrado')
