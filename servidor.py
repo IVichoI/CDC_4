@@ -24,14 +24,33 @@ connection, client = sock.accept()
 print(client, 'conectado..')
 
 # Recibir los datos en pequeños fragmentos y retransmitirlos
+# data = connection.recv(16)
+# print('\nrecivido %s"' %data)
 
-data = connection.recv(16)
-print('recivido %s"' %data)
+try:
+  # Esperar por una conexión
+  print("Cliente conectado.")
+  try:
+    while True:
+      # Recibir datos en pequeños fragmentos y retransmitirlos
+      data = connection.recv(16)
+      if data.decode('utf-8') == 'exit':
+        break  # Salir del bucle si no hay datos
+      print(f"Mensaje recibido: {data.decode('utf-8')}")
 
-if data:
-  connection.sendall(data)
-else:
-  print('Sin mensaje', client)
+      # Enviar una respuesta al cliente
+      message = f"Mensaje recibido por el servidor: {data.decode('utf-8')}"
+      connection.sendall(message.encode('utf-8'))
+  finally:
+    # Cerrar la conexión con el cliente
+    print("Fin")
+except KeyboardInterrupt:
+  print("Servidor interrumpido por el usuario.")
+finally:
+# if data:
+#   connection.sendall(data)
+# else:
+#   print('Sin mensaje', client)
 
 # Cerrar la conexion
-connection.close()
+  connection.close()
